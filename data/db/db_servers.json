@@ -1,0 +1,36 @@
+{
+    "servers": [
+        {
+            "id": 0,
+            "server_name": "test",
+            "server_id": 12345,
+            "dev_mode": false,
+            "welocme_mess": [
+                {
+                    "channel_id": 12345,
+                    "title": "Welcome to the server!",
+                    "desc": "Check this out!"
+                }
+            ],
+            "bye_mess": [
+                {
+                    "channel_id": 12345,
+                    "message": "Bye! ;("
+                }
+            ],
+            "autorole_mess": [
+                {
+                    "id": 0,
+                    "message_id": 22345,
+                    "content": [
+                        {
+                            "role_id": 12345,
+                            "role_name": "Test Role",
+                            "emoji": ":D:"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

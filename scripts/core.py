@@ -7,6 +7,7 @@ from asyncio import TimeoutError
 from scripts.config import discord_bot_version
 from scripts.constants import *
 from scripts.utils import *
+from scripts.modals import AutoRoleModal
 
 class DiscordBot():
     def __init__(self):
@@ -197,6 +198,20 @@ class DiscordBot():
                 data = load_data(db_servers_path)
                 print(role.id)
                 add_role_on_join(db_servers_path, interaction.user.guild.id, role.id)
+            else:
+                await interaction.response.send_message(f'{interaction.user.mention} You do not have sufficient permissions to use this command')
+        
+        @self.bot.tree.command(name='set_autorole', description='Set autorole to message emoji <channel>')
+        async def modal(interaction: discord.Interaction, channel: discord.abc.GuildChannel):
+            if interaction.user.guild_permissions.administrator:
+                modal = AutoRoleModal()
+                await interaction.response.send_modal(modal)
+
+                await modal.submit_event.wait()
+                modal_title, modal_description = modal.get_values()
+
+                embed = make_discord_embed(modal_title, modal_description, None, False)
+                await channel.send(embed=embed)
             else:
                 await interaction.response.send_message(f'{interaction.user.mention} You do not have sufficient permissions to use this command')
 

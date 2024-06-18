@@ -1,9 +1,0 @@
-TODO
-
-- on join roles
-    - if id already exist - break
-    - remove role
-- on join message - DONE
-    - text formating
-- on leave message - DONE
-    -text formating

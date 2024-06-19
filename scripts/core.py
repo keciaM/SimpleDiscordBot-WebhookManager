@@ -208,10 +208,9 @@ class DiscordBot():
                 await interaction.response.send_modal(modal)
 
                 await modal.submit_event.wait()
-                modal_title, modal_description = modal.get_values()
-
-                embed = make_discord_embed(modal_title, modal_description, None, False)
-                await channel.send(embed=embed)
+                modal.submit_event.clear()
+                await modal.send_embed(interaction, channel)
+                await modal.send_response_message(interaction, channel.id)
             else:
                 await interaction.response.send_message(f'{interaction.user.mention} You do not have sufficient permissions to use this command')
 

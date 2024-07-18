@@ -39,15 +39,39 @@
             "dev_mode": false,
             "welocme_mess": [],
             "bye_mess": [],
-            "autorole_mess": [],
-            "on_join_roles": []
+            "autorole_mess": [
+                {
+                    "id": 0,
+                    "message_id": 1254173585170497536,
+                    "channel_id": 796427682049032252,
+                    "content": [
+                        {
+                            "role_id": 800768359670611968,
+                            "role_name": "Aktywny",
+                            "emoji": "\u2705"
+                        }
+                    ]
+                }
+            ],
+            "on_join_roles": [
+                {
+                    "id": 0,
+                    "role_id": 800768359670611968
+                }
+            ]
         },
         {
             "id": 2,
             "server_name": "Ko\u015bci\u00f3\u0142 pw. Naj\u015bwi\u0119tszego Pythona",
             "server_id": 942844318702534717,
             "dev_mode": false,
-            "welocme_mess": [],
+            "welocme_mess": [
+                {
+                    "channel_id": 1116820366782906520,
+                    "title": "B\u0105\u017cur {user}",
+                    "desc": "{user} Polecam ci kurwa wypierdala\u0107 \ud83d\ude42!"
+                }
+            ],
             "bye_mess": [],
             "autorole_mess": [],
             "on_join_roles": []
@@ -59,7 +83,37 @@
             "dev_mode": false,
             "welocme_mess": [],
             "bye_mess": [],
-            "autorole_mess": [],
+            "autorole_mess": [
+                {
+                    "id": 0,
+                    "message_id": 1254177769252720832,
+                    "channel_id": 1203308592657203203,
+                    "content": [
+                        {
+                            "role_id": 1249819039098867745,
+                            "role_name": "ae mam malego",
+                            "emoji": "\ud83d\udcb5"
+                        }
+                    ]
+                },
+                {
+                    "id": 1,
+                    "message_id": 1254864824442290350,
+                    "channel_id": 1203308592657203203,
+                    "content": [
+                        {
+                            "role_id": 1249819039098867745,
+                            "role_name": "ae mam malego",
+                            "emoji": "\ud83c\udde8\ud83c\udded"
+                        },
+                        {
+                            "role_id": 1220162395658518608,
+                            "role_name": "Python",
+                            "emoji": "\ud83c\udde6\ud83c\udde8"
+                        }
+                    ]
+                }
+            ],
             "on_join_roles": []
         }
     ]

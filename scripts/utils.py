@@ -1,4 +1,4 @@
-from discord import Embed, member, Colour
+from discord import Embed, Member, Colour, Color
 from datetime import datetime
 
 from scripts.database import *
@@ -18,6 +18,19 @@ def make_discord_embed(title: str, desc: str, url: str, date: bool = True, embed
     else:
         time = None
     embed=Embed(title=title, description=desc, timestamp=time, color=embed_color).set_image(url=url)
+    return embed
+
+def create_user_info_embed(user: Member):
+    avatar_url = user.avatar.url if user.avatar else default_discord_ico
+
+    embed = Embed(title=f'User Info - {user.name}', color=Color.blue())
+    embed.set_image(url=avatar_url)
+    
+    embed.add_field(name='User ID', value=user.id, inline=False)
+    embed.add_field(name='Username', value=user.name, inline=False)
+    embed.add_field(name='Joined Server', value=user.joined_at.strftime('%Y-%m-%d %H:%M:%S'), inline=False)
+    embed.add_field(name='Account Created', value=user.created_at.strftime('%Y-%m-%d %H:%M:%S'), inline=False)
+
     return embed
 
 def format_message(message: str, member, guild):

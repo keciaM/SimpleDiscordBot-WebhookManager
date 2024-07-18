@@ -1,6 +1,9 @@
 import discord
 from asyncio import Event
+
 from scripts.utils import make_discord_embed
+from scripts.constants import db_servers_path
+from scripts.database import add_autorole
 
 class AutoRoleModal(discord.ui.Modal, title='Set autorole to message emoji'):
 
@@ -15,6 +18,7 @@ class AutoRoleModal(discord.ui.Modal, title='Set autorole to message emoji'):
     async def send_embed(self, interaction: discord.Interaction, channel):
             self.embed = make_discord_embed(self.modal_title.value, self.description.value, None, False)
             self.message = await channel.send(embed=self.embed)
+            add_autorole(db_servers_path, interaction.user.guild.id, self.message.id, channel.id)
     
     async def send_response_message(self, interaction: discord.Interaction, user_channel: int):
         await interaction.channel.send(f'{interaction.user.mention}, Your message ID is **{self.message.id}** on **<#{user_channel}>**.\n' 

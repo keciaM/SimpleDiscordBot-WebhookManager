@@ -8,16 +8,13 @@ from scripts.config import discord_bot_version
 from scripts.constants import *
 from scripts.utils import *
 from scripts.modals import AutoRoleModal
+from scripts.ui import TicketSetup, PresistentViewBot
+
 
 class DiscordBot():
     def __init__(self):
 
-        self.intents = discord.Intents.default()
-        self.intents.message_content = True
-        self.intents.reactions = True
-        self.intents.members = True
-
-        self.bot = commands.Bot(command_prefix='/', intents=self.intents)
+        self.bot = PresistentViewBot()
         self.bot.remove_command("help")
 
         self.on_ready()
@@ -27,6 +24,7 @@ class DiscordBot():
         self.add_admin_commands()      
         self.dev_mode()
         self.add_games()
+        self.add_context_menu()
 
     def on_ready(self):
         @self.bot.event
@@ -100,45 +98,67 @@ class DiscordBot():
                 channel = self.bot.get_channel(int(bye_message['channel_id']))
                 await channel.send(format_message(bye_message['message'], member.name, member.guild.name))
 
+        @self.bot.event
+        async def on_raw_reaction_add(payload):
+            message_id = payload.message_id
+            emoji = payload.emoji.name
+
+            autorole_content = get_autorole_content(db_servers_path, payload.guild_id, message_id)
+            if autorole_content is not None:
+                for content in autorole_content:
+                    if content['emoji'] == emoji:
+                        role_id = content['role_id']
+
+                        guild = discord.utils.find(lambda g : g.id == payload.guild_id, self.bot.guilds)
+                        role = discord.utils.get(guild.roles, id=role_id)
+                        if role is not None:
+                            member = guild.get_member(payload.user_id)
+
+                            if member is not None:
+                                await member.add_roles(role)
+                                print(f"Added role {role.name} to {member.name}")
+                            else:
+                                print(f"Member with ID {payload.user_id} not found in guild.")
+                        else:
+                            print(f"Role with ID {role_id} not found in guild.")
+                        
+
     def add_commands(self):
         @self.bot.tree.command(name='help', description='List of all available commands and how to use them, for a detailed description, see the docs')
         async def help(interaction: discord.Interaction):
             user = interaction.user
-            now = datetime.now()
-            timestamp = now.strftime("%m/%d/%Y - %H:%M:%S")
+            timestamp = datetime.now().strftime("%m/%d/%Y - %H:%M:%S")
+            image_url = getattr(user.avatar, 'url', default_discord_ico)
+            help_embed = discord.Embed(
+                title='**ks. abp. py. Tomasz Jagódka**',
+                description=f'Obecna wersja: {discord_bot_version}',
+                color=discord.Color.dark_blue()
+            ).set_author(
+                name="keciaM", url="https://www.youtube.com/@keciaam", icon_url="https://images2.imgbox.com/a8/65/cIgpMy3R_o.jpg"
+            ).set_footer(
+                text=f'{user} // {timestamp}', icon_url=image_url
+            )
+            sections = {
+                "Moderation 👮‍♂️": [],
+                "Developer 👨🏻‍💻": [
+                    '*/dev_mode*', '[True/False]\nSets Developer Mode On/Off',
+                    '*/set_welcome*', '{user} {server}\nSet welcome message',
+                    '*/set_leave*', '{user} {server}\nSet leave message',
+                    '*/set_on_join_roles*', 'Set automatically added roles when member joining the server'
+                ],
+                "Forms 📋": [],
+                "Games 🎮": [],
+                "Others 🚣🏿‍♂️": []
+            }
+            for section, content in sections.items():
+                help_embed.add_field(name=f'{10*invisible_sign}**{section}**', value='', inline=False)
+                for i in range(0, len(content), 2):
+                    help_embed.add_field(name=content[i], value=content[i+1], inline=True)
+            await interaction.response.send_message(embed=help_embed)
 
-            help_embed = discord.Embed(title='**ks. abp. py. Tomasz Jagódka**', description=f'Obecna wersja: {discord_bot_version}', color= discord.Color.dark_blue())
-            help_embed.set_author(name="keciaM", url="https://www.youtube.com/@keciaam", icon_url="https://images2.imgbox.com/a8/65/cIgpMy3R_o.jpg") 
-            # Moderacja
-            help_embed.add_field(name=f'{10*invisible_sign}**Moderation 👮‍♂️**', value='' , inline=False) 
-            
-            # Developer
-            help_embed.add_field(name=f'{10*invisible_sign}**Developer 👨🏻‍💻**', value='' , inline=False) 
-            help_embed.add_field(name='*/dev_mode*', value='[True/False]\nSets Developer Mode On/Off', inline=True)
-            help_embed.add_field(name='*/set_welcome*', value='{user} {server}\nSet welcome message', inline=True) 
-            help_embed.add_field(name='*/set_leave*', value='{user} {server}\nSet leave message', inline=True) 
-            help_embed.add_field(name='*/set_on_join_roles*', value='Set automatically added roles when member joining the server', inline=True) 
-
-            # Wazne
-            help_embed.add_field(name='', value='' , inline=False)
-            help_embed.add_field(name=f'{10*invisible_sign}**Forms 📋**', value='' , inline=False)
-
-            #   Gry
-            help_embed.add_field(name='', value='' , inline=False)
-            help_embed.add_field(name=f'{10*invisible_sign}**Games 🎮**', value='' , inline=False)
-
-            # Pozostałe
-            help_embed.add_field(name='', value='' , inline=False)
-            help_embed.add_field(name=f'{10*invisible_sign}**Others 🚣🏿‍♂️**', value='' , inline=False)
-            try:
-                image_url = user.avatar.url
-            except Exception as e:
-                print(e)
-                image_url = default_discord_ico
-
-            help_embed.set_footer(text=f'{user} // {timestamp}', icon_url = image_url)
-
-            await interaction.response.send_message(embed=help_embed)  
+        @self.bot.tree.command(name='user_info', description='Some info about user you choose')
+        async def help(interaction: discord.Interaction, member: discord.Member):
+            await interaction.response.send_message(embed=create_user_info_embed(member)) 
 
     def add_admin_commands(self):
         @self.bot.tree.command(name='set_welcome', description='Set welcome message <channel> <title> <description>')
@@ -201,7 +221,7 @@ class DiscordBot():
             else:
                 await interaction.response.send_message(f'{interaction.user.mention} You do not have sufficient permissions to use this command')
         
-        @self.bot.tree.command(name='set_autorole', description='Set autorole to message emoji <channel>')
+        @self.bot.tree.command(name='set_autorole', description='Set autorole channel to message emoji <channel>')
         async def modal(interaction: discord.Interaction, channel: discord.abc.GuildChannel):
             if interaction.user.guild_permissions.administrator:
                 modal = AutoRoleModal()
@@ -213,6 +233,54 @@ class DiscordBot():
                 await modal.send_response_message(interaction, channel.id)
             else:
                 await interaction.response.send_message(f'{interaction.user.mention} You do not have sufficient permissions to use this command')
+
+        @self.bot.tree.command(name='set_autorole_emoji', description="Set autorole to emoji reaction on message <message_id> (or the bot's last message if None).")
+        async def modal(interaction: discord.Interaction, emoji: str, role: discord.Role, message_id: str = None):
+            message_id = int(message_id) if message_id else None  # Konwertuj message_id na int, jeśli jest podany
+            if interaction.user.guild_permissions.administrator:
+                if message_id is None:
+                    did_mess_exists, mess_channel = check_autorole_mess(db_servers_path, interaction.user.guild.id)
+                    if did_mess_exists and mess_channel:
+                        add_autorole_content(db_servers_path, interaction.user.guild.id, did_mess_exists, emoji, role.id, role.name)
+                        try:
+                            channel = self.bot.get_channel(mess_channel)
+                            mess = await channel.fetch_message(did_mess_exists)
+                            await mess.add_reaction(emoji)
+                            await interaction.response.send_message(
+                                f'{interaction.user.mention} The autorole has been successfully set up.',
+                              ephemeral=True)
+                        except Exception as e:
+                            await interaction.response.send_message(f'Error: {e}', ephemeral=True)
+                    else:
+                        await interaction.response.send_message(
+                            f'{interaction.user.mention} No autorole message has been added on this server. '
+                            'Please either manually enter the message ID or create a message using the **/set_autorole command.**'
+                        )
+                else:
+                    try:
+                        user_channel = interaction.channel
+                        message = await user_channel.fetch_message(message_id)
+                    except Exception as e:
+                        print(f'Error fetching message: {e}')
+                        return 
+
+                    add_autorole(db_servers_path, interaction.user.guild.id, message_id, user_channel.id)
+                    add_autorole_content(db_servers_path, interaction.user.guild.id, message_id, emoji, role.id, role.name)
+                    try:
+                        await message.add_reaction(emoji)
+                        await interaction.response.send_message(
+                            f'{interaction.user.mention} The autorole has been successfully set up.'
+                        )
+                    except Exception as e:
+                        print(f'Error adding reaction: {e}')
+            else:
+                await interaction.response.send_message(f'{interaction.user.mention} You do not have sufficient permissions to use this command')
+
+        @self.bot.tree.command(name='set_ticket_system', description="Set up ticket system on your server.")
+        async def set_ticket_system(interaction: discord.Interaction):
+            await interaction.response.send_message(f'{interaction.user.mention} Setting up the ticket system:', view=TicketSetup())
+    
+
 
     def dev_mode(self):
         @self.bot.tree.command(name='dev_mode', description='Sets Developer Mode On/Off [True/False]')
@@ -232,6 +300,15 @@ class DiscordBot():
 
     def add_games(self):
         pass
+
+    def add_context_menu(self):
+        @self.bot.tree.context_menu(name='Message ID')
+        async def message_id_context(interaction: discord.Interaction, message: discord.Message):
+            await interaction.response.send_message(f'The ID of this message is **{message.id}**', ephemeral=True)
+
+        @self.bot.tree.context_menu(name='User Info')
+        async def user_info_context(interaction: discord.Interaction, member: discord.Member):
+            await interaction.response.send_message(embed=create_user_info_embed(member), ephemeral=True)
 
     def run(self, token):
         self.bot.run(token)

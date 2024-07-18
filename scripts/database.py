@@ -22,7 +22,7 @@ def check_server(data, new_server_id):
     return True  
 
 def check_custom_mess(data, server_id, type):
-    """Sprawdza, czy na danym serwerze istnieje jakakolwiek wiadomość powitalna/pożegnalna."""
+    """Checks if any welcome/goodbye message exists on the given server."""
     for server in data['servers']:
         if server['server_id'] == server_id:
             if type == 'welcome':
@@ -35,6 +35,23 @@ def check_custom_mess(data, server_id, type):
                 return False  
     return False
 
+def check_autorole_mess(path, server_id):
+    """Checks if any autorole message exists."""
+    data = load_data(path)
+
+    for server in data['servers']:
+        if server['server_id'] == server_id:
+            autorole_mess = server.get('autorole_mess', [])
+            if autorole_mess and len(autorole_mess) > 0:
+                last_message = autorole_mess[-1]
+                if 'message_id' in last_message:
+                    return last_message['message_id'], last_message['channel_id']
+                else:
+                    return False
+            else:
+                return False
+    
+    return False
 #===ADD===
 
 def add_server(data, server_name, server_id):
@@ -114,6 +131,45 @@ def add_role_on_join(path, server_id, role_id):
 
     return False
 
+def add_autorole(path, server_id, message_id, channel_id):
+    """Adds an autorole on server to a database."""
+
+    data = load_data(path)
+
+    for server in data['servers']:
+        if server['server_id'] == server_id:
+            new_tracked_mess = {
+                "id": len(server['autorole_mess']),
+                "message_id": message_id,
+                "channel_id": channel_id,
+                "content": []
+            }
+            server['autorole_mess'].append(new_tracked_mess)
+            save_data(path, data)
+            return True
+
+    return False
+
+def add_autorole_content(path, server_id, message_id, emoji, role_id, role_name):
+    """Adds content to an autorole message on a server."""
+
+    data = load_data(path)
+
+    for server in data['servers']:
+        if server['server_id'] == server_id:
+            for mess in server['autorole_mess']:
+                if mess['message_id'] == message_id:
+                    new_content = {
+                        "role_id": role_id,
+                        "role_name": role_name,
+                        "emoji": emoji
+                    }
+                    mess['content'].append(new_content)
+                    save_data(path, data)
+                    return True
+
+    return False
+
 #===DELETE===
 
 
@@ -132,7 +188,7 @@ def change_dev_mode(path, server_id: int, new_dev_mode: bool):
 #===GET===
 
 def get_welcome_message(path, server_id):
-    """Odczytuje wiadomość powitalną z serwera i zwraca jej szczegóły."""
+    """Reads the welcome message from the server and returns its details."""
     data = load_data(path)
 
     for server in data['servers']:
@@ -160,7 +216,7 @@ def get_leave_message(path, server_id):
     return None    
 
 def get_join_roles(path, server_id):
-    """Zwraca listę ról przypisywanych użytkownikom przy dołączaniu do serwera."""
+    """Returns a list of roles assigned to users when joining the server."""
     
     data = load_data(path)
 
@@ -173,5 +229,20 @@ def get_join_roles(path, server_id):
 
     return None
 
-# x = get_join_roles('data/db/db_servers.json', 942844318702534717)
-# print(x)
+def get_autorole_content(path, server_id, message_id):
+    """
+    Retrieve autorole message content based on server_id and message_id.
+    Returns None if no matching server or autorole message is found.
+    """
+    data = load_data(path)
+
+    for server in data['servers']:
+        if server['server_id'] == server_id:
+            for autorole_message in server['autorole_mess']:
+                if autorole_message['message_id'] == message_id:
+                    return autorole_message['content']
+
+    return None
+
+x = get_autorole_content('data/db/db_servers.json', 1203308589557620738, 1254162800964800563)
+print(x)
